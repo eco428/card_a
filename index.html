@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>トラ雄郵便局 - お手紙作成</title>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; background: #f8f8f8; font-family: 'Shippori Mincho', serif; min-height: 100vh; }
+        .controls { padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; background: #fff; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        #canvas-container { position: relative; border: 1px solid #ddd; background: white; margin: 20px 0; touch-action: none; line-height: 0; }
+        canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+        #bg-image { display: block; max-width: 100%; height: auto; pointer-events: none; }
+        
+        button { padding: 10px 18px; font-weight: bold; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; background: white; transition: 0.2s; font-family: sans-serif; }
+        button.active { background: #333; color: white; border-color: #333; }
+        .btn-clear { background: #fff; color: #ff4d4d; border: 1px solid #ff4d4d; }
+        .btn-save { background: #4CAF50; color: white; border: none; }
+        
+        #text-input-overlay {
+            position: fixed; display: none; z-index: 1000;
+            background: white; border: 2px solid #4CAF50; border-radius: 8px;
+            padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        #text-input-overlay textarea {
+            width: 250px; height: 100px; border: 1px solid #eee; 
+            font-family: 'Shippori Mincho', serif; font-size: 16px; padding: 5px; outline: none; resize: both;
+        }
+        #text-input-overlay .buttons { display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button id="pen-btn" class="active" onclick="setMode('pen')">ペン 🖊️</button>
+        <button id="text-btn" onclick="setMode('text')">テキスト ⌨️</button>
+        <button id="eraser-btn" onclick="setMode('eraser')">消しゴム 🧽</button>
+        <button class="btn-clear" onclick="clearCanvas()">全部消す 🗑️</button>
+        <button class="btn-save" onclick="saveImage()">完成！画像を保存する ✨</button>
+    </div>
+
+    <div id="text-input-overlay">
+        <textarea id="temp-text" placeholder="メッセージを入力..."></textarea>
+        <div class="buttons">
+            <button onclick="closeTextInput(false)">キャンセル</button>
+            <button class="btn-save" onclick="closeTextInput(true)">決定</button>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <img id="bg-image" src="Card1.png" alt="便箋背景">
+        <canvas id="drawing-canvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawing-canvas');
+        const bgImg = document.getElementById('bg-image');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('text-input-overlay');
+        const textarea = document.getElementById('temp-text');
+        
+        let drawing = false;
+        let mode = 'pen';
+        let textPos = { x: 0, y: 0 };
+
+        // ★ 文字の間隔（ピクセル）ここを変えて調整してね！
+        const charSpacing = -2; 
+
+        bgImg.onload = () => { adjustCanvasSize(); initCtx(); };
+        if (bgImg.complete) { adjustCanvasSize(); initCtx(); }
+
+        function adjustCanvasSize() {
+            canvas.width = bgImg.naturalWidth;
+            canvas.height = bgImg.naturalHeight;
+            canvas.style.width = bgImg.clientWidth + "px";
+            canvas.style.height = bgImg.clientHeight + "px";
+        }
+        window.onresize = adjustCanvasSize;
+
+        function initCtx() {
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            updatePenStyle();
+        }
+
+        function setMode(newMode) {
+            mode = newMode;
+            document.getElementById('pen-btn').classList.toggle('active', mode === 'pen');
+            document.getElementById('text-btn').classList.toggle('active', mode === 'text');
+            document.getElementById('eraser-btn').classList.toggle('active', mode === 'eraser');
+            updatePenStyle();
+        }
+
+        function updatePenStyle() {
+            ctx.globalCompositeOperation = (mode === 'eraser') ? 'destination-out' : 'source-over';
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = (mode === 'eraser') ? 30 : 4;
+            ctx.font = "32px 'Shippori Mincho', serif";
+            ctx.fillStyle = "#333";
+        }
+
+        function startDrawing(e) {
+            if (mode === 'text') { showTextInput(e); return; }
+            drawing = true; draw(e);
+        }
+        function stopDrawing() { drawing = false; ctx.beginPath(); }
+
+        function draw(e) {
+            if (!drawing || mode === 'text') return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function showTextInput(e) {
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            textPos = getMousePos(e);
+            overlay.style.display = 'block';
+            overlay.style.top = `${clientY}px`;
+            overlay.style.left = `${clientX}px`;
+            textarea.value = "";
+            textarea.focus();
+        }
+
+        function closeTextInput(isSave) {
+            if (isSave && textarea.value) {
+                const lines = textarea.value.split('\n');
+                const fontSize = 32;
+                const lineHeight = fontSize * 1.4;
+                ctx.globalCompositeOperation = 'source-over';
+                
+                lines.forEach((line, i) => {
+                    let currentX = textPos.x;
+                    const currentY = textPos.y + (i * lineHeight);
+                    
+                    // 文字間を一文字ずつ計算して描画
+                    for (let char of line) {
+                        ctx.fillText(char, currentX, currentY);
+                        currentX += ctx.measureText(char).width + charSpacing;
+                    }
+                });
+            }
+            overlay.style.display = 'none';
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, {passive: false});
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        window.addEventListener('touchend', stopDrawing);
+
+        function clearCanvas() {
+            if(confirm("全部消しても大丈夫？")) { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        }
+
+        function saveImage() {
+            try {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(bgImg, 0, 0);
+                tempCtx.drawImage(canvas, 0, 0);
+                const link = document.createElement('a');
+                link.download = 'eco_letter.png';
+                link.href = tempCanvas.toDataURL('image/png');
+                link.click();
+            } catch (e) { alert("保存に失敗しました。GitHub Pagesで公開すると解決します！"); }
+        }
+    </script>
+</body>
+</html>
