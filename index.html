@@ -4,121 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>お手紙作成ページ</title>
-    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* レイアウトの全体設計 */
-        body { 
-            margin: 0; 
-            display: flex; 
-            background: #f8f8f8; 
-            font-family: 'Shippori Mincho', serif; 
-            min-height: 100vh; 
-        }
+        body { margin: 0; display: flex; background: #f8f8f8; font-family: 'Noto Serif JP', serif; min-height: 100vh; }
 
-        /* 左サイドバー：メニューエリア */
+        /* 左サイドバー */
         .sidebar {
-            width: 160px;
-            height: 100vh;
-            background: #fff;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            padding: 20px 10px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            z-index: 100;
-            align-items: center;
+            width: 160px; height: 100vh; background: #fff; position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; gap: 20px; padding: 20px 10px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; z-index: 100; align-items: center;
         }
 
-        /* ツールボタンの縦並び */
-        .tool-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
+        .tool-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+
+        /* 右側：メインエリア */
+        .main-content { 
+            margin-left: 160px; 
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
         }
 
-        /* 右側：メインキャンバスエリア */
-        .main-content {
-            margin-left: 180px; /* サイドバーの幅 + 余白 */
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-        }
-
+        /* 修正：width: fit-content を追加して画像にピッタリ合わせる */
         #canvas-container { 
             position: relative; 
             border: 1px solid #ddd; 
             background: white; 
-            touch-action: none; 
             line-height: 0; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: fit-content; 
         }
         canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
         #bg-image { display: block; max-width: 100%; height: auto; pointer-events: none; }
 
         /* 円形ボタン（便箋選択） */
-        .card-selector {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            width: 100%;
-        }
+        .card-selector { display: flex; flex-direction: column; gap: 15px; align-items: center; border-top: 1px solid #eee; padding-top: 20px; width: 100%; }
         .card-btn { 
-            width: 80px; 
-            height: 80px; 
-            border-radius: 50%; 
-            background: white; 
-            border: 2px solid #ccc; 
-            cursor: pointer; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            font-family: sans-serif;
-            font-weight: bold;
-            font-size: 13px;
-            transition: 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 5px;
+            width: 80px; height: 80px; border-radius: 50%; background: white; border: 2px solid #ccc; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: sans-serif; font-weight: bold; font-size: 13px; transition: 0.3s; padding: 5px;
         }
         .card-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; transform: scale(1.1); }
 
-        /* 通常のツールボタン */
+        /* ツールボタン */
         button.tool-btn { 
-            width: 100%;
-            padding: 12px 5px; 
-            font-weight: bold; 
-            border-radius: 8px; 
-            border: 1px solid #ccc; 
-            cursor: pointer; 
-            background: white; 
-            font-family: sans-serif;
-            font-size: 14px;
+            width: 100%; padding: 12px 5px; font-weight: bold; border-radius: 8px; border: 1px solid #ccc;
+            cursor: pointer; background: white; font-family: sans-serif; font-size: 14px;
         }
         button.tool-btn.active { background: #333; color: white; border-color: #333; }
+        .btn-hand { border: 2px solid #2196F3 !important; color: #2196F3; } 
+        .btn-hand.active { background: #2196F3 !important; color: white !important; }
         .btn-clear { color: #ff4d4d; border: 1px solid #ff4d4d !important; }
         .btn-save { background: #4CAF50 !important; color: white !important; border: none !important; margin-top: 10px; }
 
         #text-input-overlay {
-            position: fixed; display: none; z-index: 1000;
-            background: white; border: 2px solid #4CAF50; border-radius: 8px;
-            padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: fixed; display: none; z-index: 1000; background: white; border: 2px solid #4CAF50;
+            border-radius: 8px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         #text-input-overlay textarea {
-            width: 250px; height: 100px; border: 1px solid #eee; 
-            font-family: 'Shippori Mincho', serif; font-size: 16px; padding: 5px; outline: none; resize: both;
+            width: 250px; height: 100px; border: 1px solid #eee; font-family: 'Noto Serif JP', serif; font-size: 16px; padding: 5px; outline: none;
         }
-
-        /* モバイル対応：画面が狭いときはサイドバーを隠すか調整が必要（今回はPC優先） */
     </style>
 </head>
 <body>
@@ -129,14 +75,15 @@
             <button id="text-btn" class="tool-btn" onclick="setMode('text')">テキスト ⌨️</button>
             <button id="eraser-btn" class="tool-btn" onclick="setMode('eraser')">消しゴム 🧽</button>
             <button class="tool-btn btn-clear" onclick="clearCanvas()">全消し 🗑️</button>
+            <button id="hand-btn" class="tool-btn btn-hand" onclick="setMode('hand')">移動 🖐️</button>
             <button class="tool-btn btn-save" onclick="saveImage()">保存 ✨</button>
         </div>
 
         <div class="card-selector">
-            <div style="font-size: 12px; color: #888; margin-bottom: 5px;">便箋を選ぶ</div>
+            <div style="font-size: 11px; color: #888;">カードを選択</div>
             <button class="card-btn active" onclick="changeCard('Card1.png', this)"><span>お祝い</span><span>🎉</span></button>
             <button class="card-btn" onclick="changeCard('Card2.png', this)"><span>ホラー</span><span>👻</span></button>
-            <button class="card-btn" onclick="changeCard('Card10.png', this)"><span>白地</span><span>✉️</span></button>
+            <button class="card-btn" onclick="changeCard('Card10.png', this)"><span>ふつう</span><span>✉️</span></button>
         </div>
     </div>
 
@@ -170,12 +117,20 @@
         bgImg.onload = () => { adjustCanvasSize(); initCtx(); };
         if (bgImg.complete) { adjustCanvasSize(); initCtx(); }
 
+        // 修正：精密なサイズ計測とコンテナの同期
         function adjustCanvasSize() {
             canvas.width = bgImg.naturalWidth;
             canvas.height = bgImg.naturalHeight;
-            canvas.style.width = bgImg.clientWidth + "px";
-            canvas.style.height = bgImg.clientHeight + "px";
+
+            const rect = bgImg.getBoundingClientRect();
+            canvas.style.width = rect.width + "px";
+            canvas.style.height = rect.height + "px";
+
+            const container = document.getElementById('canvas-container');
+            container.style.width = rect.width + "px";
+            container.style.height = rect.height + "px";
         }
+        window.onresize = adjustCanvasSize;
 
         function changeCard(fileName, btnElement) {
             const savedData = canvas.toDataURL();
@@ -199,9 +154,12 @@
 
         function setMode(newMode) {
             mode = newMode;
+            document.getElementById('hand-btn').classList.toggle('active', mode === 'hand');
             document.getElementById('pen-btn').classList.toggle('active', mode === 'pen');
             document.getElementById('text-btn').classList.toggle('active', mode === 'text');
             document.getElementById('eraser-btn').classList.toggle('active', mode === 'eraser');
+            
+            canvas.style.cursor = (mode === 'hand') ? 'grab' : 'crosshair';
             updatePenStyle();
         }
 
@@ -209,19 +167,20 @@
             ctx.globalCompositeOperation = (mode === 'eraser') ? 'destination-out' : 'source-over';
             ctx.strokeStyle = "#333";
             ctx.lineWidth = (mode === 'eraser') ? 30 : 4;
-            ctx.font = "32px 'Shippori Mincho', serif";
+            ctx.font = "32px 'Noto Serif JP', serif";
             ctx.fillStyle = "#333";
         }
 
         function startDrawing(e) {
+            if (mode === 'hand') return; 
             if (mode === 'text') { showTextInput(e); return; }
             drawing = true; draw(e);
         }
         function stopDrawing() { drawing = false; ctx.beginPath(); }
 
         function draw(e) {
-            if (!drawing || mode === 'text') return;
-            e.preventDefault();
+            if (!drawing || mode === 'hand' || mode === 'text') return;
+            e.preventDefault(); 
             const pos = getMousePos(e);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
@@ -270,8 +229,17 @@
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing, {passive: false});
-        canvas.addEventListener('touchmove', draw, {passive: false});
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if (mode !== 'hand') e.preventDefault();
+            startDrawing(e);
+        }, {passive: false});
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (mode !== 'hand') e.preventDefault();
+            draw(e);
+        }, {passive: false});
+        
         window.addEventListener('touchend', stopDrawing);
 
         function clearCanvas() {
