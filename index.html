@@ -11,7 +11,7 @@
         /* 左サイドバー */
         .sidebar {
             width: 100px; height: 100vh; background: #fff; position: fixed; left: 0; top: 0;
-            display: flex; flex-direction: column; gap: 20px; padding: 20px 10px;
+            display: flex; flex-direction: column; gap: 10px; padding: 10px 10px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; z-index: 100; align-items: center;
         }
 
@@ -40,11 +40,11 @@
         #bg-image { display: block; max-width: 100%; height: auto; pointer-events: none; }
 
         /* 円形ボタン（便箋選択） */
-        .card-selector { display: flex; flex-direction: column; gap: 15px; align-items: center; border-top: 1px solid #eee; padding-top: 20px; width: 100%; }
+        .card-selector { display: flex; flex-direction: column; gap: 15px; align-items: center; border-top: 1px solid #eee; padding-top: 10px; width: 100%; }
         .card-btn { 
             width: 80px; height: 80px; border-radius: 50%; background: white; border: 2px solid #ccc; cursor: pointer;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-family: sans-serif; font-weight: bold; font-size: 13px; transition: 0.3s; padding: 5px;
+            font-family: sans-serif; font-weight: bold; font-size: 17px; transition: 0.3s; padding: 5px;
         }
         .card-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; transform: scale(1.1); }
 
@@ -81,7 +81,7 @@
         </div>
 
         <div class="card-selector">
-            <div style="font-size: 13px; color: #888;">カードを選択</div>
+            <div style="font-size: 15px; color: #888;">カードを選択</div>
             <button class="card-btn active" onclick="changeCard('Card1.png', this)"><span>祝 🎉</span></button>
             <button class="card-btn" onclick="changeCard('Card2.png', this)"><span>怖 👻</span></button>
             <button class="card-btn" onclick="changeCard('Card10.png', this)"><span>白 ✉️</span></button>
