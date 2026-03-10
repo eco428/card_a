@@ -6,19 +6,76 @@
     <title>お手紙作成ページ</title>
     <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; display: flex; flex-direction: column; align-items: center; background: #f8f8f8; font-family: 'Shippori Mincho', serif; min-height: 100vh; }
-        
-        /* 上段：ツールコントロール */
-        .controls { padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; background: #fff; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        
-        /* 下段：便箋デザイン選択（円形ボタンエリア） */
-        .card-selector { padding: 10px; display: flex; gap: 20px; overflow-x: auto; background: #f0f0f0; width: 100%; justify-content: center; align-items: center; }
+        /* レイアウトの全体設計 */
+        body { 
+            margin: 0; 
+            display: flex; 
+            background: #f8f8f8; 
+            font-family: 'Shippori Mincho', serif; 
+            min-height: 100vh; 
+        }
 
-        /* 円形ボタンのスタイル */
+        /* 左サイドバー：メニューエリア */
+        .sidebar {
+            width: 160px;
+            height: 100vh;
+            background: #fff;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding: 20px 10px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 100;
+            align-items: center;
+        }
+
+        /* ツールボタンの縦並び */
+        .tool-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        /* 右側：メインキャンバスエリア */
+        .main-content {
+            margin-left: 180px; /* サイドバーの幅 + 余白 */
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        #canvas-container { 
+            position: relative; 
+            border: 1px solid #ddd; 
+            background: white; 
+            touch-action: none; 
+            line-height: 0; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+        #bg-image { display: block; max-width: 100%; height: auto; pointer-events: none; }
+
+        /* 円形ボタン（便箋選択） */
+        .card-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            width: 100%;
+        }
         .card-btn { 
-            width: 65px; /* ボタンの直径 */
-            height: 65px; 
-            border-radius: 50%; /* 正円にする */
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%; 
             background: white; 
             border: 2px solid #ccc; 
             cursor: pointer; 
@@ -26,28 +83,31 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            font-family: sans-serif; /* 文字は読みやすく */
+            font-family: sans-serif;
             font-weight: bold;
-            font-size: 16px; /* 上段のボタンと同じくらいのサイズ */
+            font-size: 13px;
             transition: 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            line-height: 1.2;
-            word-break: break-all;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             padding: 5px;
         }
-        .card-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; transform: scale(1.1); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
-        .card-btn:hover { transform: translateY(-3px); }
+        .card-btn.active { background: #4CAF50; color: white; border-color: #4CAF50; transform: scale(1.1); }
 
-        #canvas-container { position: relative; border: 1px solid #ddd; background: white; margin: 20px 0; touch-action: none; line-height: 0; }
-        canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
-        #bg-image { display: block; max-width: 100%; height: auto; pointer-events: none; }
-        
-        /* 上段の通常ボタン */
-        button { padding: 10px 18px; font-weight: bold; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; background: white; transition: 0.2s; font-family: sans-serif; font-size: 16px; }
-        button.active { background: #333; color: white; border-color: #333; }
-        .btn-clear { background: #fff; color: #ff4d4d; border: 1px solid #ff4d4d; }
-        .btn-save { background: #4CAF50; color: white; border: none; }
-        
+        /* 通常のツールボタン */
+        button.tool-btn { 
+            width: 100%;
+            padding: 12px 5px; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            cursor: pointer; 
+            background: white; 
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        button.tool-btn.active { background: #333; color: white; border-color: #333; }
+        .btn-clear { color: #ff4d4d; border: 1px solid #ff4d4d !important; }
+        .btn-save { background: #4CAF50 !important; color: white !important; border: none !important; margin-top: 10px; }
+
         #text-input-overlay {
             position: fixed; display: none; z-index: 1000;
             background: white; border: 2px solid #4CAF50; border-radius: 8px;
@@ -57,36 +117,42 @@
             width: 250px; height: 100px; border: 1px solid #eee; 
             font-family: 'Shippori Mincho', serif; font-size: 16px; padding: 5px; outline: none; resize: both;
         }
-        #text-input-overlay .buttons { display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px; }
+
+        /* モバイル対応：画面が狭いときはサイドバーを隠すか調整が必要（今回はPC優先） */
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <button id="pen-btn" class="active" onclick="setMode('pen')">ペン 🖊️</button>
-        <button id="text-btn" onclick="setMode('text')">テキスト ⌨️</button>
-        <button id="eraser-btn" onclick="setMode('eraser')">消しゴム 🧽</button>
-        <button class="btn-clear" onclick="clearCanvas()">全部消す 🗑️</button>
-        <button class="btn-save" onclick="saveImage()">完成！保存 ✨</button>
-    </div>
+    <div class="sidebar">
+        <div class="tool-group">
+            <button id="pen-btn" class="tool-btn active" onclick="setMode('pen')">ペン 🖊️</button>
+            <button id="text-btn" class="tool-btn" onclick="setMode('text')">テキスト ⌨️</button>
+            <button id="eraser-btn" class="tool-btn" onclick="setMode('eraser')">消しゴム 🧽</button>
+            <button class="tool-btn btn-clear" onclick="clearCanvas()">全消し 🗑️</button>
+            <button class="tool-btn btn-save" onclick="saveImage()">保存 ✨</button>
+        </div>
 
-    <div class="card-selector">
-        <button class="card-btn active" onclick="changeCard('Card1.png', this)"><span>お祝い</span><span>🎉</span></button>
-        <button class="card-btn" onclick="changeCard('Card2.png', this)"><span>ホラー</span><span>👻</span></button>
-        <button class="card-btn" onclick="changeCard('Card10.png', this)"><span>ふつう</span><span>✉️</span></button> 
-   </div>
-
-    <div id="text-input-overlay">
-        <textarea id="temp-text" placeholder="メッセージを入力..."></textarea>
-        <div class="buttons">
-            <button onclick="closeTextInput(false)">キャンセル</button>
-            <button class="btn-save" onclick="closeTextInput(true)">決定</button>
+        <div class="card-selector">
+            <div style="font-size: 12px; color: #888; margin-bottom: 5px;">便箋を選ぶ</div>
+            <button class="card-btn active" onclick="changeCard('Card1.png', this)"><span>お祝い</span><span>🎉</span></button>
+            <button class="card-btn" onclick="changeCard('Card2.png', this)"><span>ホラー</span><span>👻</span></button>
+            <button class="card-btn" onclick="changeCard('Card10.png', this)"><span>白地</span><span>✉️</span></button>
         </div>
     </div>
 
-    <div id="canvas-container">
-        <img id="bg-image" src="Card1.png" alt="便箋背景">
-        <canvas id="drawing-canvas"></canvas>
+    <div class="main-content">
+        <div id="canvas-container">
+            <img id="bg-image" src="Card1.png" alt="便箋背景">
+            <canvas id="drawing-canvas"></canvas>
+        </div>
+    </div>
+
+    <div id="text-input-overlay">
+        <textarea id="temp-text" placeholder="メッセージを入力..."></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;">
+            <button onclick="closeTextInput(false)">戻る</button>
+            <button style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px;" onclick="closeTextInput(true)">決定</button>
+        </div>
     </div>
 
     <script>
@@ -101,11 +167,7 @@
         let textPos = { x: 0, y: 0 };
         const charSpacing = 4;
 
-        // 画像の読み込み完了時にサイズを合わせる
-        bgImg.onload = () => {
-            adjustCanvasSize();
-            initCtx();
-        };
+        bgImg.onload = () => { adjustCanvasSize(); initCtx(); };
         if (bgImg.complete) { adjustCanvasSize(); initCtx(); }
 
         function adjustCanvasSize() {
@@ -114,30 +176,17 @@
             canvas.style.width = bgImg.clientWidth + "px";
             canvas.style.height = bgImg.clientHeight + "px";
         }
-        window.onresize = adjustCanvasSize;
 
-        // ★ ここを修正：絵を保持したままカードを切り替える
         function changeCard(fileName, btnElement) {
-            // 1. 現在のキャンバスの内容を画像データとして一時保存
             const savedData = canvas.toDataURL();
-            
-            // 2. 画像の読み込み完了後の処理を上書き
             bgImg.onload = () => {
-                adjustCanvasSize(); // ここで一度消える
+                adjustCanvasSize();
                 initCtx();
-                
-                // 3. 保存しておいた絵を新しいサイズの上に描き直す
                 const tempImg = new Image();
-                tempImg.onload = () => {
-                    ctx.drawImage(tempImg, 0, 0);
-                };
+                tempImg.onload = () => { ctx.drawImage(tempImg, 0, 0); };
                 tempImg.src = savedData;
             };
-
-            // 4. 画像の切り替え開始
             bgImg.src = fileName;
-
-            // ボタンの見た目を更新
             document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
         }
@@ -237,7 +286,7 @@
                 tempCtx.drawImage(bgImg, 0, 0);
                 tempCtx.drawImage(canvas, 0, 0);
                 const link = document.createElement('a');
-                link.download = 'post_tool_letter.png';
+                link.download = 'eco_letter.png';
                 link.href = tempCanvas.toDataURL('image/png');
                 link.click();
             } catch (e) { alert("保存に失敗しました。GitHub Pagesで公開すると解決します！"); }
