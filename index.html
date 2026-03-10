@@ -12,12 +12,12 @@
         .controls { padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; background: #fff; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         
         /* 下段：便箋デザイン選択（円形ボタンエリア） */
-        .card-selector { padding: 20px 10px; display: flex; gap: 20px; overflow-x: auto; background: #f0f0f0; width: 100%; justify-content: center; align-items: center; }
+        .card-selector { padding: 10px; display: flex; gap: 20px; overflow-x: auto; background: #f0f0f0; width: 100%; justify-content: center; align-items: center; }
 
         /* 円形ボタンのスタイル */
         .card-btn { 
-            width: 100px; /* ボタンの直径 */
-            height: 100px; 
+            width: 65px; /* ボタンの直径 */
+            height: 65px; 
             border-radius: 50%; /* 正円にする */
             background: white; 
             border: 2px solid #ccc; 
@@ -101,7 +101,11 @@
         let textPos = { x: 0, y: 0 };
         const charSpacing = 4;
 
-        bgImg.onload = () => { adjustCanvasSize(); initCtx(); };
+        // 画像の読み込み完了時にサイズを合わせる
+        bgImg.onload = () => {
+            adjustCanvasSize();
+            initCtx();
+        };
         if (bgImg.complete) { adjustCanvasSize(); initCtx(); }
 
         function adjustCanvasSize() {
@@ -112,8 +116,28 @@
         }
         window.onresize = adjustCanvasSize;
 
+        // ★ ここを修正：絵を保持したままカードを切り替える
         function changeCard(fileName, btnElement) {
+            // 1. 現在のキャンバスの内容を画像データとして一時保存
+            const savedData = canvas.toDataURL();
+            
+            // 2. 画像の読み込み完了後の処理を上書き
+            bgImg.onload = () => {
+                adjustCanvasSize(); // ここで一度消える
+                initCtx();
+                
+                // 3. 保存しておいた絵を新しいサイズの上に描き直す
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    ctx.drawImage(tempImg, 0, 0);
+                };
+                tempImg.src = savedData;
+            };
+
+            // 4. 画像の切り替え開始
             bgImg.src = fileName;
+
+            // ボタンの見た目を更新
             document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
         }
